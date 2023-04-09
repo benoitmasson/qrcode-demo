@@ -11,6 +11,11 @@ import (
 	"gocv.io/x/gocv"
 )
 
+const (
+	miniCodeWidth  = 200
+	miniCodeHeight = 200
+)
+
 func main() {
 	// parse args
 	deviceID := "0"
@@ -56,9 +61,7 @@ func main() {
 		qrcodeDetector := gocv.NewQRCodeDetector()
 		found := qrcodeDetector.Detect(img, &points) // false positives
 		// => https://docs.opencv.org/4.x/d9/d61/tutorial_py_morphological_ops.html to clean image (open)
-		// => gocv.GetPerspectiveTransform() (https://www.projectpro.io/recipes/what-are-warpaffine-and-warpperspective-opencv) puis WarpPerspective() (https://docs.opencv.org/4.x/da/d6e/tutorial_py_geometric_transformations.html) to transform (rotate/scale/translate)
 		if found {
-			// https://docs.opencv.org/4.x/de/dc3/classcv_1_1QRCodeDetector.html#a64373f7d877d27473f64fe04bb57d22b
 			r, c := points.Rows(), points.Cols()
 			// fmt.Println(points.Channels(), points.Size(), points.Type(), points.Total(), r, c)
 			imagePoints := make([]image.Point, 0, r*c)
@@ -76,19 +79,16 @@ func main() {
 
 			found = validateSquare(imagePoints, width, height)
 			if found {
-				fmt.Println("Points seem OK, proceed")
+				fmt.Println("Points form a square, proceed")
+				miniCode := setMiniCodeInCorner(&img, imagePoints, miniCodeWidth, miniCodeHeight)
+				miniCode.Close()
 
-				gocv.Line(&img, imagePoints[0], imagePoints[1], color.RGBA{255, 0, 0, 255}, 5)
-				gocv.Line(&img, imagePoints[1], imagePoints[2], color.RGBA{255, 0, 0, 255}, 5)
-				gocv.Line(&img, imagePoints[2], imagePoints[3], color.RGBA{255, 0, 0, 255}, 5)
-				gocv.Line(&img, imagePoints[3], imagePoints[0], color.RGBA{255, 0, 0, 255}, 5)
+				outlineQRCode(&img, imagePoints, color.RGBA{255, 0, 0, 255}, 5)
 			} // else {
 			// 	fmt.Println("Inconsistent points, discard")
 			// }
 
 			// fmt.Println()
-			points.Close()
-			points = gocv.NewMat()
 		}
 
 		window.IMShow(img)
@@ -140,6 +140,31 @@ func validateSquare(points []image.Point, width, height int) bool {
 
 func nearlyEquals(i, j, tolerance int) bool {
 	return j-i >= -tolerance && j-i <= tolerance
+}
+
+func setMiniCodeInCorner(img *gocv.Mat, points []image.Point, width, height int) gocv.Mat {
+	originVector := gocv.NewPointVectorFromPoints(points)
+	defer originVector.Close()
+	destinationVector := gocv.NewPointVectorFromPoints([]image.Point{
+		{X: 0, Y: 0},
+		{X: width - 1, Y: 0},
+		{X: width - 1, Y: height - 1},
+		{X: 0, Y: height - 1},
+	})
+	defer destinationVector.Close()
+	transform := gocv.GetPerspectiveTransform(originVector, destinationVector)
+	defer transform.Close()
+	rectangle := (*img).Region(image.Rect(0, 0, width-1, height-1))
+
+	gocv.WarpPerspective(*img, &rectangle, transform, image.Point{X: width - 1, Y: height - 1})
+	return rectangle
+}
+
+func outlineQRCode(img *gocv.Mat, points []image.Point, color color.RGBA, width int) {
+	gocv.Line(img, points[0], points[1], color, width)
+	gocv.Line(img, points[1], points[2], color, width)
+	gocv.Line(img, points[2], points[3], color, width)
+	gocv.Line(img, points[3], points[0], color, width)
 }
 
 func printQRCodeMat(qrcode gocv.Mat) {
