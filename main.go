@@ -60,7 +60,6 @@ func main() {
 
 		qrcodeDetector := gocv.NewQRCodeDetector()
 		found := qrcodeDetector.Detect(img, &points) // false positives
-		// => https://docs.opencv.org/4.x/d9/d61/tutorial_py_morphological_ops.html to clean image (open)
 		if found {
 			r, c := points.Rows(), points.Cols()
 			// fmt.Println(points.Channels(), points.Size(), points.Type(), points.Total(), r, c)
@@ -81,6 +80,7 @@ func main() {
 			if found {
 				fmt.Println("Points form a square, proceed")
 				miniCode := setMiniCodeInCorner(&img, imagePoints, miniCodeWidth, miniCodeHeight)
+				enhanceImage(&miniCode)
 				miniCode.Close()
 
 				outlineQRCode(&img, imagePoints, color.RGBA{255, 0, 0, 255}, 5)
@@ -158,6 +158,15 @@ func setMiniCodeInCorner(img *gocv.Mat, points []image.Point, width, height int)
 
 	gocv.WarpPerspective(*img, &rectangle, transform, image.Point{X: width - 1, Y: height - 1})
 	return rectangle
+}
+
+func enhanceImage(img *gocv.Mat) {
+	// "open" to clean image: https://docs.opencv.org/4.x/d9/d61/tutorial_py_morphological_ops.html
+	kernel := gocv.GetStructuringElement(gocv.MorphRect, image.Point{X: 3, Y: 3})
+	defer kernel.Close()
+	gocv.MorphologyEx(*img, img, gocv.MorphOpen, kernel)
+	// increase contrast
+	gocv.AddWeighted(*img, 1.5, *img, 0, 0, img)
 }
 
 func outlineQRCode(img *gocv.Mat, points []image.Point, color color.RGBA, width int) {
