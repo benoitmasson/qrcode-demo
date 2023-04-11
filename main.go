@@ -81,9 +81,21 @@ func main() {
 				fmt.Println("Points form a square, proceed")
 				miniCode := setMiniCodeInCorner(&img, imagePoints, miniCodeWidth, miniCodeHeight)
 				enhanceImage(&miniCode)
-				miniCode.Close()
 
-				outlineQRCode(&img, imagePoints, color.RGBA{255, 0, 0, 255}, 5)
+				firstColumn := getFirstColumnSequences(miniCode)
+				fmt.Printf("First column: %v\n", firstColumn)
+				if len(firstColumn) >= 3 && len(firstColumn)%2 == 1 && // column starts and ends with 2 different black sequences
+					nearlyEquals(firstColumn[0], firstColumn[len(firstColumn)-1], 5) { // column should start and end with similar black blocks
+					scale := float64(firstColumn[0]) / 7. // a marker is 7 dots high
+					fmt.Printf("Dots are %f pixels wide\n", scale)
+					// TODO: get dots
+					miniCode.Close()
+
+					fmt.Println("Dots scanned successfully, proceed")
+					outlineQRCode(&img, imagePoints, color.RGBA{255, 0, 0, 255}, 5)
+				} else {
+					found = false
+				}
 			} // else {
 			// 	fmt.Println("Inconsistent points, discard")
 			// }
@@ -167,6 +179,54 @@ func enhanceImage(img *gocv.Mat) {
 	gocv.MorphologyEx(*img, img, gocv.MorphOpen, kernel)
 	// increase contrast
 	gocv.AddWeighted(*img, 1.5, *img, 0, 0, img)
+}
+
+const (
+	luminosityThreshold         = 500
+	luminosityPersistenceOffset = 0 // used to favor sequence color persistence if in doubt
+)
+
+func getFirstColumnSequences(img gocv.Mat) []int {
+	sequences := make([]int, 0)
+	const offset = 2
+
+	isFirstSequence := true
+	currentSequenceIsBlack := false
+	currentSequenceLength := 0
+
+	for row := offset; row < img.Rows()-offset; row++ {
+		vec := img.GetVecbAt(row, offset)
+		pixelLuminosity := int(vec[0]) + int(vec[1]) + int(vec[2])
+
+		threshold := luminosityThreshold
+		if currentSequenceIsBlack {
+			threshold += luminosityPersistenceOffset
+		} else {
+			threshold -= luminosityPersistenceOffset
+		}
+		pixelIsBlack := true
+		if pixelLuminosity >= threshold {
+			pixelIsBlack = false
+		}
+
+		// fmt.Printf("[row %d] lum: %v / black: %v / sequence: %v\n", y, pixelLuminosity, pixelIsBlack, currentSequenceLength)
+		if pixelIsBlack == currentSequenceIsBlack {
+			currentSequenceLength++
+		} else {
+			if isFirstSequence && !currentSequenceIsBlack {
+				isFirstSequence = false
+			} else {
+				sequences = append(sequences, currentSequenceLength)
+			}
+			currentSequenceIsBlack = !currentSequenceIsBlack
+			currentSequenceLength = 1
+		}
+	}
+	if !isFirstSequence {
+		sequences = append(sequences, currentSequenceLength)
+	}
+
+	return sequences
 }
 
 func outlineQRCode(img *gocv.Mat, points []image.Point, color color.RGBA, width int) {
