@@ -83,12 +83,13 @@ func main() {
 				enhanceImage(&miniCode)
 
 				firstColumn := getFirstColumnSequences(miniCode)
-				fmt.Printf("First column: %v\n", firstColumn)
+				// fmt.Printf("First column: %v\n", firstColumn)
 				if len(firstColumn) >= 3 && len(firstColumn)%2 == 1 && // column starts and ends with 2 different black sequences
 					nearlyEquals(firstColumn[0], firstColumn[len(firstColumn)-1], 5) { // column should start and end with similar black blocks
 					scale := float64(firstColumn[0]) / 7. // a marker is 7 dots high
 					fmt.Printf("Dots are %f pixels wide\n", scale)
-					// TODO: get dots
+					dots := scanDots(miniCode, scale)
+					printQRCode(dots)
 					miniCode.Close()
 
 					fmt.Println("Dots scanned successfully, proceed")
@@ -229,11 +230,66 @@ func getFirstColumnSequences(img gocv.Mat) []int {
 	return sequences
 }
 
+func scanDots(img gocv.Mat, scale float64) [][]bool {
+	dots := make([][]bool, 0)
+
+	i, j, row, col := 0, 0, 0, 0
+	for {
+		row = int((float64(i)+0.5)*scale + 0.5)
+		if row >= img.Rows() {
+			break
+		}
+		line := make([]bool, 0)
+		for {
+			col = int((float64(j)+0.5)*scale + 0.5)
+			if col >= img.Cols() {
+				break
+			}
+			vec := img.GetVecbAt(row, col)
+			pixelLuminosity := int(vec[0]) + int(vec[1]) + int(vec[2])
+			pixelIsBlack := true
+			if pixelLuminosity >= luminosityThreshold {
+				pixelIsBlack = false
+			}
+			line = append(line, pixelIsBlack)
+			j++
+		}
+		dots = append(dots, line)
+		i++
+		j = 0
+	}
+
+	return dots
+}
+
 func outlineQRCode(img *gocv.Mat, points []image.Point, color color.RGBA, width int) {
 	gocv.Line(img, points[0], points[1], color, width)
 	gocv.Line(img, points[1], points[2], color, width)
 	gocv.Line(img, points[2], points[3], color, width)
 	gocv.Line(img, points[3], points[0], color, width)
+}
+
+func printQRCode(qrcode [][]bool) {
+	if len(qrcode) == 0 {
+		return
+	}
+
+	fmt.Println("\033[7;m", strings.Repeat(" ", 2*len(qrcode[0])+3)) // turn on inverse mode, start with blank line
+
+	for i := 0; i < len(qrcode); i++ {
+		fmt.Print("  ") // start line with blank characters
+		for j := 0; j < len(qrcode[i]); j++ {
+			val := qrcode[i][j]
+			char := " " // blank, displayed white
+			if val {
+				char = "█" // filled, displayed black
+			}
+			fmt.Print(char, char) // double print to achieve 1:1 scale
+		}
+		fmt.Println("  ") // end line with blank characters
+	}
+
+	fmt.Println(strings.Repeat(" ", 2*len(qrcode[0])+3), "\033[0;m") // end with blank line, turn off inverse mode
 }
 
 func printQRCodeMat(qrcode gocv.Mat) {
