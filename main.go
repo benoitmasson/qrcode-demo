@@ -29,9 +29,10 @@ func main() {
 	window := gocv.NewWindow("QR-code decoder")
 	defer window.Close()
 
-	img := gocv.NewMat()
+	// pre-allocate matrices once and for all
+	img, imgWithMiniCode := gocv.NewMat(), gocv.NewMat()
 	defer img.Close()
-
+	defer imgWithMiniCode.Close()
 	points := gocv.NewMat()
 	defer points.Close()
 
@@ -54,7 +55,7 @@ func main() {
 			first = false
 		}
 
-		img, found := scanCode(&img, &points, width, height)
+		img, found := scanCode(&img, &imgWithMiniCode, &points, width, height)
 
 		window.IMShow(img)
 		if window.WaitKey(1) == 27 {
@@ -67,10 +68,9 @@ func main() {
 	}
 }
 
-func scanCode(img *gocv.Mat, points *gocv.Mat, width, height int) (gocv.Mat, bool) {
-	newImg := img.Clone()
+func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height int) (gocv.Mat, bool) {
 	qrcodeDetector := gocv.NewQRCodeDetector()
-	found := qrcodeDetector.Detect(newImg, points) // false positives
+	found := qrcodeDetector.Detect(*img, points) // false positives
 	if !found {
 		return *img, false
 	}
@@ -96,7 +96,8 @@ func scanCode(img *gocv.Mat, points *gocv.Mat, width, height int) (gocv.Mat, boo
 	}
 	fmt.Println("Points form a square, proceed")
 
-	miniCode := setMiniCodeInCorner(&newImg, imagePoints, miniCodeWidth, miniCodeHeight)
+	img.CopyTo(imgWithMiniCode)
+	miniCode := setMiniCodeInCorner(imgWithMiniCode, imagePoints, miniCodeWidth, miniCodeHeight)
 	detect.EnhanceImage(&miniCode)
 
 	dots, ok := detect.GetDots(miniCode)
@@ -107,10 +108,7 @@ func scanCode(img *gocv.Mat, points *gocv.Mat, width, height int) (gocv.Mat, boo
 	fmt.Println("Dots scanned successfully, proceed")
 
 	printQRCode(dots)
-	outlineQRCode(&newImg, imagePoints, color.RGBA{255, 0, 0, 255}, 5)
+	outlineQRCode(imgWithMiniCode, imagePoints, color.RGBA{255, 0, 0, 255}, 5)
 
-	newImg.CopyTo(img)
-	newImg.Close()
-
-	return *img, true
+	return *imgWithMiniCode, true
 }
