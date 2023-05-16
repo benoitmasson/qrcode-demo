@@ -1,10 +1,10 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"image"
 	"image/color"
-	"os"
 	"time"
 
 	"gocv.io/x/gocv"
@@ -14,14 +14,13 @@ import (
 
 func main() {
 	// parse args
-	deviceID := "0"
-	if len(os.Args) >= 2 {
-		deviceID = os.Args[1]
-	}
+	var deviceID int
+	flag.IntVar(&deviceID, "device-id", 0, "Webcam device ID, for image capture")
+	flag.Parse()
 
 	webcam, err := gocv.OpenVideoCapture(deviceID)
 	if err != nil {
-		fmt.Printf("Error opening video capture device: %v\n", deviceID)
+		fmt.Printf("Error opening video capture device %d: %v\n", deviceID, err)
 		return
 	}
 	defer webcam.Close()
