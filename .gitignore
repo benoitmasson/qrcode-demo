@@ -3,4 +3,4 @@
 *.orig
 
 /.vscode
-/qrcode-opencv
+/qrcode-demo
