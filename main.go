@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"image"
@@ -9,6 +10,7 @@ import (
 
 	"gocv.io/x/gocv"
 
+	"github.com/benoitmasson/qrcode-demo/internal/decode"
 	"github.com/benoitmasson/qrcode-demo/internal/detect"
 )
 
@@ -54,7 +56,7 @@ func main() {
 			first = false
 		}
 
-		img, found := scanCode(&img, &imgWithMiniCode, &points, width, height)
+		img, found, message := scanCode(&img, &imgWithMiniCode, &points, width, height)
 
 		window.IMShow(img)
 		if window.WaitKey(1) == 27 {
@@ -62,16 +64,21 @@ func main() {
 		}
 
 		if found {
+			fmt.Printf("QR-code message is: '\033[1m%s\033[0m'\n", message)
+			fmt.Println()
 			time.Sleep(3 * time.Second)
 		}
 	}
 }
 
-func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height int) (gocv.Mat, bool) {
+// scanCode extracts the QR-code from the given image, then decodes it.
+// If successful, returns a new image with miniature QR-code in the top-left corner and the message.
+// Otherwise, returns the original image.
+func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height int) (gocv.Mat, bool, string) {
 	qrcodeDetector := gocv.NewQRCodeDetector()
 	found := qrcodeDetector.Detect(*img, points) // false positives
 	if !found {
-		return *img, false
+		return *img, false, ""
 	}
 
 	r, c := points.Rows(), points.Cols()
@@ -91,7 +98,7 @@ func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height in
 
 	found = detect.ValidateSquare(imagePoints, width, height)
 	if !found {
-		return *img, false
+		return *img, false, ""
 	}
 	fmt.Println("Points form a square, proceed")
 
@@ -102,12 +109,33 @@ func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height in
 	dots, ok := detect.GetDots(miniCode)
 	miniCode.Close()
 	if !ok {
-		return *img, false
+		return *img, false, ""
 	}
 	fmt.Println("Dots scanned successfully, proceed")
+
+	message, err := decodeMessage(dots)
+	if err != nil {
+		fmt.Printf("Dots do not form a valid QR-code: %v\n", err)
+		return *img, false, ""
+	}
 
 	printQRCode(dots)
 	outlineQRCode(imgWithMiniCode, imagePoints, color.RGBA{255, 0, 0, 255}, 5)
 
-	return *imgWithMiniCode, true
+	return *imgWithMiniCode, true, message
+}
+
+// decodeMessage follows explanations from https://typefully.com/DanHollick/qr-codes-T7tLlNi
+// to decode the QR-code contents.
+func decodeMessage(dots detect.QRCode) (string, error) {
+	if len(dots) < 17 {
+		return "", errors.New("dots array too small")
+	}
+
+	_, err := decode.Version(dots)
+	if err != nil {
+		return "", err
+	}
+
+	return "TODO", nil
 }
