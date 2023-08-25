@@ -136,6 +136,11 @@ func decodeMessage(dots detect.QRCode) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	maskID, errorCorrectionLevel, err := decode.Format(dots)
+	if err != nil {
+		return "", err
+	}
+	fmt.Printf("Mask ID is %d, error correction level is %d\n", maskID, errorCorrectionLevel)
 
 	return "TODO", nil
 }
