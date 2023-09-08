@@ -142,5 +142,8 @@ func decodeMessage(dots detect.QRCode) (string, error) {
 	}
 	fmt.Printf("Mask ID is %d, error correction level is %d\n", maskID, errorCorrectionLevel)
 
+	bits := decode.ReadBits(dots, maskID)
+	_ = bits
+
 	return "TODO", nil
 }
