@@ -9,7 +9,7 @@ import (
 
 	"gocv.io/x/gocv"
 
-	"github.com/benoitmasson/qrcode-demo/detect"
+	"github.com/benoitmasson/qrcode-demo/internal/detect"
 )
 
 func main() {
