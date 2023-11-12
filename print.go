@@ -5,9 +5,11 @@ import (
 	"strings"
 
 	"gocv.io/x/gocv"
+
+	"github.com/benoitmasson/qrcode-demo/internal/detect"
 )
 
-func printQRCode(qrcode [][]bool) {
+func printQRCode(qrcode detect.QRCode) {
 	if len(qrcode) == 0 {
 		return
 	}
@@ -30,6 +32,7 @@ func printQRCode(qrcode [][]bool) {
 	fmt.Println(strings.Repeat(" ", 2*len(qrcode[0])+3), "\033[0;m") // end with blank line, turn off inverse mode
 }
 
+// nolint: unused
 func printQRCodeMat(qrcode gocv.Mat) {
 	fmt.Println("\033[7;m", strings.Repeat(" ", 2*qrcode.Cols()+3)) // turn on inverse mode, start with blank line
 

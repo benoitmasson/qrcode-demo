@@ -7,6 +7,10 @@ import (
 	"gocv.io/x/gocv"
 )
 
+// QRCode is the representation of the code: 2-dimensional array of dots
+// "true" means black dot, "false" means
+type QRCode [][]bool
+
 const (
 	luminosityThreshold         = 500
 	luminosityPersistenceOffset = 0 // used to favor sequence color persistence if in doubt
@@ -14,7 +18,7 @@ const (
 
 // GetDots scans the input image pixels to try to extract QR-code dots.
 // Returns the grid of dots (true is black), and a boolean telling whether extraction was successful.
-func GetDots(img gocv.Mat) ([][]bool, bool) {
+func GetDots(img gocv.Mat) (QRCode, bool) {
 	firstColumn := getFirstColumnSequences(img)
 	// fmt.Printf("First column: %v\n", firstColumn)
 
@@ -80,8 +84,8 @@ func getFirstColumnSequences(img gocv.Mat) []int {
 
 // scanDots scans the input image step by step according to the given scale (dot size in pixel),
 // and constructs the dots grid
-func scanDots(img gocv.Mat, scale float64) [][]bool {
-	dots := make([][]bool, 0)
+func scanDots(img gocv.Mat, scale float64) QRCode {
+	dots := make(QRCode, 0)
 
 	i, j, row, col := 0, 0, 0, 0
 	for {
