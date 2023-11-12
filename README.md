@@ -4,7 +4,7 @@
 
 ## Disclaimer
 
-This project is an educational _demo_ used to explain how QR-codes work, it is not meant to be used in real-life applications.
+This project was inspired by [Dan Hollick's article](https://typefully.com/DanHollick/qr-codes-T7tLlNi), which gives a nice overview of how QR-codes work. It is an educational _demo_ used to explain how QR-codes work, it is not meant to be used in real-life applications.
 
 If you need an efficient and complete QR-code reader written in Go, you may use the powerful [makiuchi-d/gozxing](https://github.com/makiuchi-d/gozxing) library.
 
@@ -22,9 +22,9 @@ The application can be stopped by pressing `Esc` key at any time.
 
 A different capture device may be chosen with parameter `--device-id` (default to `0`).
 
-## Description
+## Explanations
 
-### Detection
+### 1. Code detection
 
 The application captures frames from the webcam, then tries to detect QR-codes in each frame.
 
@@ -44,7 +44,23 @@ Image capture and processing is performed thanks to [OpenCV 4](https://opencv.or
 
 When all steps are successful, the QR-code is highlighted in the image, and the video freezes for a few seconds to show the result.
 
-### Decoding
+### 2. Extracting contents
+
+Once the QR-code dots have been detected, the code contents bits are extracted from it.
+
+1. Get metadata from the QR-code: version information (the "size" of the code), the mask ID to apply to the dots and the error correction level used on the contents.
+
+   For the last two (the code "format"), error correction is used on the selected dots to make sure the value found is correct. This error correction implements the Reed-Solomon algorithm, as explained on [this page](https://www.thonky.com/qr-code-tutorial/format-version-information).
+
+2. Read the contents bits in the correct order, starting from the bottom-right, 2 columns at a time from right to left, alternating upwards and downwards and avoiding reserved areas.
+
+   See [explanations and picture](https://www.thonky.com/qr-code-tutorial/module-placement-matrix#step-6-place-the-data-bits) for an illustration.
+
+   Note that the current implementation supports only 1 alignement pattern, and thus works only with QR-codes version 6 and below.
+
+The returned bits contain metadata (content type and length), and the contents with error correction data.
+
+### 3. Decoding message
 
 <!-- TODO -->
 

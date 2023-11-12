@@ -33,6 +33,7 @@ func ReadBits(dots [][]bool, maskID MaskID) []bool {
 			if i >= s-9 && i <= s-5 &&
 				j >= s-8 && j <= s-5 {
 				// ignore alignment pattern in the bottom-right
+				// works only for a single pattern, i.e. version 6 and below
 				continue
 			}
 
