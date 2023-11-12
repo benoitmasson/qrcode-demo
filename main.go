@@ -10,8 +10,8 @@ import (
 
 	"gocv.io/x/gocv"
 
-	"github.com/benoitmasson/qrcode-demo/internal/decode"
 	"github.com/benoitmasson/qrcode-demo/internal/detect"
+	"github.com/benoitmasson/qrcode-demo/internal/extract"
 )
 
 func main() {
@@ -113,9 +113,16 @@ func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height in
 	}
 	fmt.Println("Dots scanned successfully, proceed")
 
-	message, err := decodeMessage(dots)
+	bits, version, errorCorrectionLevel, err := extractBits(dots)
 	if err != nil {
 		fmt.Printf("Dots do not form a valid QR-code: %v\n", err)
+		return *img, false, ""
+	}
+	fmt.Println("Bits extracted successfully, proceed")
+
+	message, err := decodeMessage(bits, version, errorCorrectionLevel)
+	if err != nil {
+		fmt.Printf("Bits do not encode a valid QR-code: %v\n", err)
 		return *img, false, ""
 	}
 
@@ -125,25 +132,28 @@ func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height in
 	return *imgWithMiniCode, true, message
 }
 
-// decodeMessage follows explanations from https://typefully.com/DanHollick/qr-codes-T7tLlNi
-// to decode the QR-code contents.
-func decodeMessage(dots detect.QRCode) (string, error) {
+// extractBits follows explanations from https://typefully.com/DanHollick/qr-codes-T7tLlNi
+// to extract the QR-code bits from the 2D dots grid.
+func extractBits(dots detect.QRCode) ([]bool, uint, extract.ErrorCorrectionLevel, error) {
 	if len(dots) < 17 {
-		return "", errors.New("dots array too small")
+		return nil, 0, 0, errors.New("dots array too small")
 	}
 
-	_, err := decode.Version(dots)
+	version, err := extract.Version(dots)
 	if err != nil {
-		return "", err
+		return nil, 0, 0, err
 	}
-	maskID, errorCorrectionLevel, err := decode.Format(dots)
+	maskID, errorCorrectionLevel, err := extract.Format(dots)
 	if err != nil {
-		return "", err
+		return nil, 0, 0, err
 	}
 	fmt.Printf("Mask ID is %d, error correction level is %d\n", maskID, errorCorrectionLevel)
 
-	bits := decode.ReadBits(dots, maskID)
-	_ = bits
+	bits := extract.ReadBits(dots, maskID)
 
+	return bits, version, errorCorrectionLevel, nil
+}
+
+func decodeMessage(bits []bool, version uint, errorCorrectionLevel extract.ErrorCorrectionLevel) (string, error) {
 	return "TODO", nil
 }

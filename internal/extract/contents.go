@@ -1,4 +1,4 @@
-package decode
+package extract
 
 // ReadBits extracts the contents bits from the QR-code, excluding markers and all special dots,
 // applying the given mask, and putting everything in the right order.

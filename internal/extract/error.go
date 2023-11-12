@@ -1,4 +1,4 @@
-package decode
+package extract
 
 import (
 	"math/bits"

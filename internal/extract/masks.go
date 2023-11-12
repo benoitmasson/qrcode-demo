@@ -1,4 +1,4 @@
-package decode
+package extract
 
 // Inspired from https://www.thonky.com/qr-code-tutorial/mask-patterns
 
