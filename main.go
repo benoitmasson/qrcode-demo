@@ -10,6 +10,7 @@ import (
 
 	"gocv.io/x/gocv"
 
+	"github.com/benoitmasson/qrcode-demo/internal/decode"
 	"github.com/benoitmasson/qrcode-demo/internal/detect"
 	"github.com/benoitmasson/qrcode-demo/internal/extract"
 )
@@ -134,7 +135,7 @@ func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height in
 
 // extractBits follows explanations from https://typefully.com/DanHollick/qr-codes-T7tLlNi
 // to extract the QR-code bits from the 2D dots grid.
-func extractBits(dots detect.QRCode) ([]bool, uint, extract.ErrorCorrectionLevel, error) {
+func extractBits(dots detect.QRCode) ([]bool, uint, decode.ErrorCorrectionLevel, error) {
 	if len(dots) < 17 {
 		return nil, 0, 0, errors.New("dots array too small")
 	}
@@ -161,6 +162,14 @@ func extractBits(dots detect.QRCode) ([]bool, uint, extract.ErrorCorrectionLevel
 	return bits, version, errorCorrectionLevel, nil
 }
 
-func decodeMessage(bits []bool, version uint, errorCorrectionLevel extract.ErrorCorrectionLevel) (string, error) {
+func decodeMessage(bits []bool, version uint, errorCorrectionLevel decode.ErrorCorrectionLevel) (string, error) {
+	mode, bits := decode.GetMode(bits)
+	length, contents, err := decode.GetContentLength(bits, version, mode, errorCorrectionLevel)
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Printf("Mode is %b / Content length is %d bytes\n", mode, length)
+
 	return "TODO", nil
 }
