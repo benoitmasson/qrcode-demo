@@ -58,6 +58,8 @@ Once the QR-code dots have been detected, the code contents bits are extracted f
 
    Note that the current implementation supports only 1 alignement pattern, and thus works only with QR-codes version 6 and below.
 
+   Also, de-interleaving the result is not implemented (yet?) for large versions or error correction levels.
+
 The returned bits contain metadata (content type and length), and the contents with error correction data.
 
 ### 3. Decoding message

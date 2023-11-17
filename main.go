@@ -151,6 +151,13 @@ func extractBits(dots detect.QRCode) ([]bool, uint, extract.ErrorCorrectionLevel
 
 	bits := extract.ReadBits(dots, maskID)
 
+	// TODO: de-interleave error correction blocks and contents,
+	// in the following cases:
+	// - error correction level == low 		and version >= 6
+	// - error correction level == medium 	and version >= 4
+	// - error correction level == quartile and version >= 3
+	// - error correction level == high 	and version >= 3
+
 	return bits, version, errorCorrectionLevel, nil
 }
 
