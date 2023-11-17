@@ -168,8 +168,12 @@ func decodeMessage(bits []bool, version uint, errorCorrectionLevel decode.ErrorC
 	if err != nil {
 		return "", err
 	}
-
 	fmt.Printf("Mode is %b / Content length is %d bytes\n", mode, length)
 
-	return "TODO", nil
+	message, err := decode.Message(mode, length, contents, errorCorrectionLevel)
+	if err != nil {
+		return "", err
+	}
+
+	return message, nil
 }
