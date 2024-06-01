@@ -77,7 +77,7 @@ func TestMessage_Numeric(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actualMessage, err := Message(NumericMode, test.length, test.contents, ErrorCorrectionLevelLow)
+			actualMessage, err := Message(NumericMode, test.length, test.contents)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 				return
@@ -122,7 +122,7 @@ func TestMessage_Alphanumeric(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actualMessage, err := Message(AlphanumericMode, test.length, test.contents, ErrorCorrectionLevelLow)
+			actualMessage, err := Message(AlphanumericMode, test.length, test.contents)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 				return
@@ -164,7 +164,7 @@ func TestMessage_Byte(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actualMessage, err := Message(ByteMode, test.length, test.contents, ErrorCorrectionLevelLow)
+			actualMessage, err := Message(ByteMode, test.length, test.contents)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 				return

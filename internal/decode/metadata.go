@@ -14,6 +14,20 @@ const (
 	KanjiMode        Mode = 0b1000
 )
 
+func (m Mode) String() string {
+	switch m {
+	case NumericMode:
+		return "Numeric"
+	case AlphanumericMode:
+		return "Alphanumeric"
+	case ByteMode:
+		return "Byte"
+	case KanjiMode:
+		return "Kanji"
+	}
+	return fmt.Sprintf("Unknown(%b)", m)
+}
+
 // GetMode extracts the contents type from the header.
 // The first 4 bits are used.
 // In case ECI character is found, ECI data is ignored, and the trimmed bits are returned.

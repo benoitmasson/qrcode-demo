@@ -8,8 +8,7 @@ import (
 
 // Message decodes the given binary contents, of the given length and for the given mode, to text.
 // Kanji mode is currently not implemented.
-// Error correction is currently not performed, only the raw contents is decoded.
-func Message(mode Mode, length uint, contents []bool, errorCorrectionLevel ErrorCorrectionLevel) (string, error) {
+func Message(mode Mode, length uint, contents []bool) (string, error) {
 	if mode == KanjiMode {
 		return "", errors.New("Kanji mode is not supported")
 	}
