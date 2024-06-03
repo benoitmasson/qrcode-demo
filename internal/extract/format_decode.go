@@ -1,17 +1,6 @@
 package extract
 
-import (
-	"math/bits"
-)
-
-type ErrorCorrectionLevel uint8
-
-const (
-	ErrorCorrectionLevelMedium ErrorCorrectionLevel = iota
-	ErrorCorrectionLevelLow
-	ErrorCorrectionLevelHigh
-	ErrorCorrectionLevelQuartile
-)
+import "math/bits"
 
 func init() {
 	initFormatRemainders()

@@ -58,12 +58,36 @@ Once the QR-code dots have been detected, the code contents bits are extracted f
 
    Note that the current implementation supports only 1 alignement pattern, and thus works only with QR-codes version 6 and below.
 
-   Also, de-interleaving the result is not implemented (yet?) for large versions or error correction levels.
-
 The returned bits contain metadata (content type and length), and the contents with error correction data.
 
 ### 3. Decoding message
 
-<!-- TODO -->
+Finally, decode the message from the bits contents.
 
-https://typefully.com/DanHollick/qr-codes-T7tLlNi
+1. First of all, use the [Reed-Solomon algorithm](https://en.m.wikiversity.org/wiki/Reed%E2%80%93Solomon_codes_for_coders) to perform error correction on the full contents bits, to correct any errors that may have been introduced during the scanning process. Library http://github.com/colin-davis/reedSolomon is used for this purpose.
+
+   Note that interleaved blocks are not supported yes, hence the higher version-error correction level pairs will not be decoded.
+
+2. Then, read data from the contents bits: first, metadata (character mode and message length), then the message itself. See [this page](https://www.thonky.com/qr-code-tutorial/data-encoding) for more details on how data is encoded.
+
+   Note that Kanji mode is not supported at all, and ECI (unicode) may produce strange results.
+
+If the QR-code is successfully decoded, the message is revealed in the console.
+
+## References
+
+The following explanations have been used to implement this project. Many thanks to their authors.
+
+### Big picture
+
+- Dan Hollick's blog: https://typefully.com/DanHollick/qr-codes-T7tLlNi
+
+### Encoding & Decoding
+
+- Thonky's guide: https://www.thonky.com/qr-code-tutorial
+- Linux Magazine n°194: https://connect.ed-diamond.com/GNU-Linux-Magazine/glmf-194/decoder-un-code-qr (French)
+
+### Error correction
+
+- Linux Magazine n°198: https://connect.ed-diamond.com/GNU-Linux-Magazine/glmf-198/reparer-un-code-qr (French)
+- Wikiversity: https://en.m.wikiversity.org/wiki/Reed%E2%80%93Solomon_codes_for_coders

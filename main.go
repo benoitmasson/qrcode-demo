@@ -10,6 +10,7 @@ import (
 
 	"gocv.io/x/gocv"
 
+	"github.com/benoitmasson/qrcode-demo/internal/decode"
 	"github.com/benoitmasson/qrcode-demo/internal/detect"
 	"github.com/benoitmasson/qrcode-demo/internal/extract"
 )
@@ -100,7 +101,7 @@ func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height in
 	if !found {
 		return *img, false, ""
 	}
-	fmt.Println("Points form a square, proceed")
+	// fmt.Println("Points form a square, proceed")
 
 	img.CopyTo(imgWithMiniCode)
 	miniCode := setMiniCodeInCorner(imgWithMiniCode, imagePoints, miniCodeWidth, miniCodeHeight)
@@ -122,7 +123,7 @@ func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height in
 
 	message, err := decodeMessage(bits, version, errorCorrectionLevel)
 	if err != nil {
-		fmt.Printf("Bits do not encode a valid QR-code: %v\n", err)
+		fmt.Printf("QR-code cannot be decoded: %v\n", err)
 		return *img, false, ""
 	}
 
@@ -134,7 +135,7 @@ func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height in
 
 // extractBits follows explanations from https://typefully.com/DanHollick/qr-codes-T7tLlNi
 // to extract the QR-code bits from the 2D dots grid.
-func extractBits(dots detect.QRCode) ([]bool, uint, extract.ErrorCorrectionLevel, error) {
+func extractBits(dots detect.QRCode) ([]bool, uint, decode.ErrorCorrectionLevel, error) {
 	if len(dots) < 17 {
 		return nil, 0, 0, errors.New("dots array too small")
 	}
@@ -147,20 +148,32 @@ func extractBits(dots detect.QRCode) ([]bool, uint, extract.ErrorCorrectionLevel
 	if err != nil {
 		return nil, 0, 0, err
 	}
-	fmt.Printf("Mask ID is %d, error correction level is %d\n", maskID, errorCorrectionLevel)
+	fmt.Printf("Mask ID is %d / Error correction level is %s\n", maskID, errorCorrectionLevel.String())
 
 	bits := extract.ReadBits(dots, maskID)
-
-	// TODO: de-interleave error correction blocks and contents,
-	// in the following cases:
-	// - error correction level == low 		and version >= 6
-	// - error correction level == medium 	and version >= 4
-	// - error correction level == quartile and version >= 3
-	// - error correction level == high 	and version >= 3
 
 	return bits, version, errorCorrectionLevel, nil
 }
 
-func decodeMessage(bits []bool, version uint, errorCorrectionLevel extract.ErrorCorrectionLevel) (string, error) {
-	return "TODO", nil
+// decodeMessages performs error correction on the bits read, then decodes the message.
+// In case error correction fails, the uncorrected message is returned (if possible).
+func decodeMessage(bits []bool, version uint, errorCorrectionLevel decode.ErrorCorrectionLevel) (string, error) {
+	bitsCorrected, err := decode.Correct(bits, version, errorCorrectionLevel)
+	if err != nil {
+		return "", err
+	}
+
+	mode, bits := decode.GetMode(bitsCorrected)
+	length, contents, err := decode.GetContentLength(bits, version, mode, errorCorrectionLevel)
+	if err != nil {
+		return "", err
+	}
+	fmt.Printf("Mode is %s / Content length is %d bytes\n", mode.String(), length)
+
+	message, err := decode.Message(mode, length, contents)
+	if err != nil {
+		return "", err
+	}
+
+	return message, nil
 }

@@ -1,4 +1,4 @@
-package extract
+package decode
 
 import (
 	"strconv"
@@ -12,6 +12,16 @@ func TestBitsToUint16(t *testing.T) {
 		expectedUint16 uint16
 	}
 	tests := []test{
+		{
+			name:           "nil",
+			bits:           nil,
+			expectedUint16: 0,
+		},
+		{
+			name:           "empty",
+			bits:           []bool{},
+			expectedUint16: 0,
+		},
 		{
 			name:           "only 0s",
 			bits:           []bool{false, false, false, false, false},
@@ -42,11 +52,16 @@ func TestBitsToUint16(t *testing.T) {
 			bits:           []bool{false, true, true, false, true},
 			expectedUint16: 0b01101,
 		},
+		{
+			name:           "16 digits",
+			bits:           []bool{true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true},
+			expectedUint16: 0b1111111111111111,
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actualUint16 := bitsToUint16(test.bits)
+			actualUint16 := BitsToUint16(test.bits)
 			if actualUint16 != test.expectedUint16 {
 				t.Errorf("expected %016s but got %016s", strconv.FormatInt(int64(test.expectedUint16), 2), strconv.FormatInt(int64(actualUint16), 2))
 			}
