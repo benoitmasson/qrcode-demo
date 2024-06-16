@@ -1,4 +1,4 @@
-package main
+package detect
 
 import (
 	"image"
@@ -7,12 +7,7 @@ import (
 	"gocv.io/x/gocv"
 )
 
-const (
-	miniCodeWidth  = 200
-	miniCodeHeight = 200
-)
-
-func setMiniCodeInCorner(img *gocv.Mat, points []image.Point, width, height int) gocv.Mat {
+func SetMiniCodeInCorner(img *gocv.Mat, points []image.Point, width, height int) gocv.Mat {
 	originVector := gocv.NewPointVectorFromPoints(points)
 	defer originVector.Close()
 	destinationVector := gocv.NewPointVectorFromPoints([]image.Point{
@@ -30,7 +25,7 @@ func setMiniCodeInCorner(img *gocv.Mat, points []image.Point, width, height int)
 	return rectangle
 }
 
-func outlineQRCode(img *gocv.Mat, points []image.Point, color color.RGBA, width int) {
+func OutlineQRCode(img *gocv.Mat, points []image.Point, color color.RGBA, width int) {
 	gocv.Line(img, points[0], points[1], color, width)
 	gocv.Line(img, points[1], points[2], color, width)
 	gocv.Line(img, points[2], points[3], color, width)
