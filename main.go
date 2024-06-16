@@ -72,6 +72,11 @@ func main() {
 	}
 }
 
+const (
+	miniCodeWidth  = 200
+	miniCodeHeight = 200
+)
+
 // scanCode extracts the QR-code from the given image, then decodes it.
 // If successful, returns a new image with miniature QR-code in the top-left corner and the message.
 // Otherwise, returns the original image.
@@ -104,7 +109,7 @@ func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height in
 	// fmt.Println("Points form a square, proceed")
 
 	img.CopyTo(imgWithMiniCode)
-	miniCode := setMiniCodeInCorner(imgWithMiniCode, imagePoints, miniCodeWidth, miniCodeHeight)
+	miniCode := detect.SetMiniCodeInCorner(imgWithMiniCode, imagePoints, miniCodeWidth, miniCodeHeight)
 	detect.EnhanceImage(&miniCode)
 
 	dots, ok := detect.GetDots(miniCode)
@@ -128,7 +133,7 @@ func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height in
 	}
 
 	printQRCode(dots)
-	outlineQRCode(imgWithMiniCode, imagePoints, color.RGBA{255, 0, 0, 255}, 5)
+	detect.OutlineQRCode(imgWithMiniCode, imagePoints, color.RGBA{255, 0, 0, 255}, 5)
 
 	return *imgWithMiniCode, true, message
 }
