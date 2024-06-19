@@ -26,8 +26,11 @@ func SetMiniCodeInCorner(img *gocv.Mat, points []image.Point, width, height int)
 }
 
 func OutlineQRCode(img *gocv.Mat, points []image.Point, color color.RGBA, width int) {
-	gocv.Line(img, points[0], points[1], color, width)
-	gocv.Line(img, points[1], points[2], color, width)
-	gocv.Line(img, points[2], points[3], color, width)
-	gocv.Line(img, points[3], points[0], color, width)
+	for i := 1; i < len(points); i++ {
+		gocv.Line(img, points[i-1], points[i], color, width)
+	}
+	if len(points) > 0 {
+		// close outline
+		gocv.Line(img, points[len(points)-1], points[0], color, width)
+	}
 }
