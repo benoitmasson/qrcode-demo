@@ -1,2 +1,4 @@
+github.com/colin-davis/reedSolomon v0.0.0-20171106220123-4bffafb75357 h1:jtkiPsEnSrM83KDKLzquQVdEWaHZq40JTHKv40/pWFk=
+github.com/colin-davis/reedSolomon v0.0.0-20171106220123-4bffafb75357/go.mod h1:TFQlymOxfJq/cfq6vqmI1RmK59GbqGgiu/b0bN2nDWA=
 gocv.io/x/gocv v0.36.1 h1:6XkEaPOk7h/umjy+MXgSEtSeCIgcPJhccUjrJFhjdTY=
 gocv.io/x/gocv v0.36.1/go.mod h1:lmS802zoQmnNvXETpmGriBqWrENPei2GxYx5KUxJsMA=
