@@ -167,17 +167,17 @@ func extractBits(dots detect.QRCode) ([]bool, uint, decode.ErrorCorrectionLevel,
 func decodeMessage(bits []bool, version uint, errorCorrectionLevel decode.ErrorCorrectionLevel) (string, error) {
 	var message string
 
-	_, err := decode.Correct(bits, version, errorCorrectionLevel)
+	bitsCorrected, err := decode.Correct(bits, version, errorCorrectionLevel)
 	if err != nil {
 		return "", err
 	}
 
-	// mode := decode.GetMode(bitsCorrected)
-	// length, contents, err := decode.GetContentLength(bitsCorrected, version, mode, errorCorrectionLevel)
-	// if err != nil {
-	// 	return "", err
-	// }
-	// fmt.Printf("Mode is %s / Content length is %d bytes\n", mode.String(), length)
+	mode := decode.GetMode(bitsCorrected)
+	length, _, err := decode.GetContentLength(bitsCorrected, version, mode, errorCorrectionLevel)
+	if err != nil {
+		return "", err
+	}
+	fmt.Printf("Mode is %s / Content length is %d bytes\n", mode.String(), length)
 
 	// message, err = decode.Message(mode, length, contents)
 	// if err != nil {
