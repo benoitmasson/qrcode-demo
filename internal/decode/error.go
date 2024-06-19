@@ -1,6 +1,7 @@
 package decode
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/colin-davis/reedSolomon"
@@ -44,8 +45,29 @@ func init() {
 // See https://en.m.wikiversity.org/wiki/Reed%E2%80%93Solomon_codes_for_coders for further details
 // on how the algorithm works.
 func Correct(bits []bool, version uint, errorCorrectionLevel ErrorCorrectionLevel) ([]bool, error) {
-	// TODO (3.1) perform error correction with reedSolomon library
-	return bits, nil
+	blocksLayout := dataLayoutByVersionByErrorCorrectionLevel[version][errorCorrectionLevel]
+	if len(blocksLayout) != 1 || blocksLayout[0].numberOfBlocks != 1 {
+		// TODO: de-interleave error correction blocks and contents,
+		// in the following cases:
+		// - error correction level == low 		and version >= 6
+		// - error correction level == medium 	and version >= 4
+		// - error correction level == quartile and version >= 3
+		// - error correction level == high 	and version >= 3
+		// See https://www.thonky.com/qr-code-tutorial/error-correction-table
+
+		return bits, errors.New("unable to correct message: data is interleaved, not handled yet")
+	}
+	totalLength, contentLength := blocksLayout[0].totalBlockBytes, blocksLayout[0].contentBlockBytes
+
+	contentInt := bitsToIntSlice(totalLength, bits)
+
+	numberECCSymbols := totalLength - contentLength
+	errorLocations := []int{}
+	correctedContent, _, err := reedSolomon.Decode(contentInt, numberECCSymbols, errorLocations)
+	if err != nil {
+		return bits, fmt.Errorf("failed to correct message: %w", err)
+	}
+	return intSliceToBits(correctedContent), nil
 }
 
 // bitsToIntSlice converts the first "length" bytes of a sequence of bits

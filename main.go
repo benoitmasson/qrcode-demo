@@ -113,18 +113,18 @@ func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height in
 	fmt.Println("Dots scanned successfully, proceed")
 	printQRCode(dots)
 
-	_, _, _, err := extractBits(dots)
+	bits, version, errorCorrectionLevel, err := extractBits(dots)
 	if err != nil {
 		fmt.Printf("Dots do not form a valid QR-code: %v\n", err)
 		return *img, false, ""
 	}
 	fmt.Println("Bits extracted successfully, proceed")
 
-	// message, err = decodeMessage(bits, version, errorCorrectionLevel)
-	// if err != nil {
-	// 	fmt.Printf("QR-code cannot be decoded: %v\n", err)
-	// 	return *img, false, ""
-	// }
+	message, err = decodeMessage(bits, version, errorCorrectionLevel)
+	if err != nil {
+		fmt.Printf("QR-code cannot be decoded: %v\n", err)
+		return *img, false, ""
+	}
 
 	detect.OutlineQRCode(imgWithMiniCode, imagePoints, color.RGBA{255, 0, 0, 255}, 5)
 
@@ -157,7 +157,7 @@ func extractBits(dots detect.QRCode) ([]bool, uint, decode.ErrorCorrectionLevel,
 	fmt.Printf("Mask ID is %d / Error correction level is %s\n", maskID, errorCorrectionLevel.String())
 
 	bits = extract.ReadBits(dots, maskID)
-	fmt.Printf("%d bits read, starting with: %v\n", len(bits), bits[:50])
+	// fmt.Printf("%d bits read, starting with: %v\n", len(bits), bits[:50])
 
 	return bits, version, errorCorrectionLevel, nil
 }
@@ -167,10 +167,10 @@ func extractBits(dots detect.QRCode) ([]bool, uint, decode.ErrorCorrectionLevel,
 func decodeMessage(bits []bool, version uint, errorCorrectionLevel decode.ErrorCorrectionLevel) (string, error) {
 	var message string
 
-	// bitsCorrected, err := decode.Correct(bits, version, errorCorrectionLevel)
-	// if err != nil {
-	// 	return "", err
-	// }
+	_, err := decode.Correct(bits, version, errorCorrectionLevel)
+	if err != nil {
+		return "", err
+	}
 
 	// mode := decode.GetMode(bitsCorrected)
 	// length, contents, err := decode.GetContentLength(bitsCorrected, version, mode, errorCorrectionLevel)
