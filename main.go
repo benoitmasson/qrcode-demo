@@ -173,16 +173,16 @@ func decodeMessage(bits []bool, version uint, errorCorrectionLevel decode.ErrorC
 	}
 
 	mode := decode.GetMode(bitsCorrected)
-	length, _, err := decode.GetContentLength(bitsCorrected, version, mode, errorCorrectionLevel)
+	length, contents, err := decode.GetContentLength(bitsCorrected, version, mode, errorCorrectionLevel)
 	if err != nil {
 		return "", err
 	}
 	fmt.Printf("Mode is %s / Content length is %d bytes\n", mode.String(), length)
 
-	// message, err = decode.Message(mode, length, contents)
-	// if err != nil {
-	// 	return "", err
-	// }
+	message, err = decode.Message(mode, length, contents)
+	if err != nil {
+		return "", err
+	}
 
 	return message, nil
 }
