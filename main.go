@@ -87,20 +87,7 @@ func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height in
 		return *img, false, ""
 	}
 
-	r, c := points.Rows(), points.Cols()
-	// fmt.Println(points.Channels(), points.Size(), points.Type(), points.Total(), r, c)
-	imagePoints := make([]image.Point, 0, r*c)
-	for i := 0; i < r; i++ {
-		for j := 0; j < c; j++ {
-			vec := points.GetVecfAt(i, j)
-			x, y := vec[0], vec[1]
-			// fmt.Printf("Point %d: (%f, %f)\n", i*r+j, x, y)
-			imagePoints = append(imagePoints, image.Point{
-				X: int(x),
-				Y: int(y),
-			})
-		}
-	}
+	imagePoints := newImagePointsFromPoints(points)
 
 	found = detect.ValidateSquare(imagePoints, width, height)
 	if !found {
@@ -181,4 +168,23 @@ func decodeMessage(bits []bool, version uint, errorCorrectionLevel decode.ErrorC
 	}
 
 	return message, nil
+}
+
+func newImagePointsFromPoints(points *gocv.Mat) []image.Point {
+	r, c := points.Rows(), points.Cols()
+	// fmt.Println(points.Channels(), points.Size(), points.Type(), points.Total(), r, c)
+
+	imagePoints := make([]image.Point, 0, r*c)
+	for i := 0; i < r; i++ {
+		for j := 0; j < c; j++ {
+			vec := points.GetVecfAt(i, j)
+			x, y := vec[0], vec[1]
+
+			imagePoints = append(imagePoints, image.Point{
+				X: int(x),
+				Y: int(y),
+			})
+		}
+	}
+	return imagePoints
 }
