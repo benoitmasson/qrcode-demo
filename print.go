@@ -2,14 +2,26 @@ package main
 
 import (
 	"fmt"
+	"image"
+	"image/color"
 	"strings"
 
 	"gocv.io/x/gocv"
-
-	"github.com/benoitmasson/qrcode-demo/internal/detect"
 )
 
-func printQRCode(qrcode detect.QRCode) {
+func outlineQRCode(img *gocv.Mat, points []image.Point, color color.RGBA, width int) {
+	for i := 1; i < len(points); i++ {
+		gocv.Line(img, points[i-1], points[i], color, width)
+	}
+	if len(points) > 0 {
+		// close outline
+		gocv.Line(img, points[len(points)-1], points[0], color, width)
+	}
+}
+
+type QRCode [][]bool
+
+func printQRCode(qrcode QRCode) {
 	if len(qrcode) == 0 {
 		return
 	}

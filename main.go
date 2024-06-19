@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"image"
@@ -9,10 +8,6 @@ import (
 	"math"
 
 	"gocv.io/x/gocv"
-
-	"github.com/benoitmasson/qrcode-demo/internal/decode"
-	"github.com/benoitmasson/qrcode-demo/internal/detect"
-	"github.com/benoitmasson/qrcode-demo/internal/extract"
 )
 
 func main() {
@@ -73,102 +68,24 @@ func main() {
 	}
 }
 
-const (
-	miniCodeWidth  = 200
-	miniCodeHeight = 200
-)
-
 // scanCode extracts the QR-code from the given image, then decodes it.
 // If successful, returns a new image with miniature QR-code in the top-left corner and the message.
 // Otherwise, returns the original image.
 func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height int) (gocv.Mat, bool, string) {
-	qrcodeDetector := gocv.NewQRCodeDetector()
-	found := qrcodeDetector.Detect(*img, points) // false positives
-	if !found {
-		return *img, false, ""
+	var (
+		imagePoints []image.Point
+		message     string
+		found       bool
+	)
+
+	// TODO: decode QR-code
+
+	if found {
+		imagePoints = newImagePointsFromPoints(points)
+		outlineQRCode(img, imagePoints, color.RGBA{255, 0, 0, 255}, 5)
 	}
 
-	imagePoints := newImagePointsFromPoints(points)
-
-	found = detect.ValidateSquare(imagePoints, width, height)
-	if !found {
-		return *img, false, ""
-	}
-	// fmt.Println("Points form a square, proceed")
-
-	img.CopyTo(imgWithMiniCode)
-	miniCode := detect.SetMiniCodeInCorner(imgWithMiniCode, imagePoints, miniCodeWidth, miniCodeHeight)
-	detect.EnhanceImage(&miniCode)
-
-	dots, ok := detect.GetDots(miniCode)
-	miniCode.Close()
-	if !ok {
-		return *img, false, ""
-	}
-	fmt.Println("Dots scanned successfully, proceed")
-
-	bits, version, errorCorrectionLevel, err := extractBits(dots)
-	if err != nil {
-		fmt.Printf("Dots do not form a valid QR-code: %v\n", err)
-		return *img, false, ""
-	}
-	fmt.Println("Bits extracted successfully, proceed")
-
-	message, err := decodeMessage(bits, version, errorCorrectionLevel)
-	if err != nil {
-		fmt.Printf("QR-code cannot be decoded: %v\n", err)
-		return *img, false, ""
-	}
-
-	printQRCode(dots)
-	detect.OutlineQRCode(imgWithMiniCode, imagePoints, color.RGBA{255, 0, 0, 255}, 5)
-
-	return *imgWithMiniCode, true, message
-}
-
-// extractBits follows explanations from https://typefully.com/DanHollick/qr-codes-T7tLlNi
-// to extract the QR-code bits from the 2D dots grid.
-func extractBits(dots detect.QRCode) ([]bool, uint, decode.ErrorCorrectionLevel, error) {
-	if len(dots) < 17 {
-		return nil, 0, 0, errors.New("dots array too small")
-	}
-
-	version, err := extract.Version(dots)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	maskID, errorCorrectionLevel, err := extract.Format(dots)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	fmt.Printf("Mask ID is %d / Error correction level is %s\n", maskID, errorCorrectionLevel.String())
-
-	bits := extract.ReadBits(dots, maskID)
-
-	return bits, version, errorCorrectionLevel, nil
-}
-
-// decodeMessages performs error correction on the bits read, then decodes the message.
-// In case error correction fails, the uncorrected message is returned (if possible).
-func decodeMessage(bits []bool, version uint, errorCorrectionLevel decode.ErrorCorrectionLevel) (string, error) {
-	bitsCorrected, err := decode.Correct(bits, version, errorCorrectionLevel)
-	if err != nil {
-		return "", err
-	}
-
-	mode, bits := decode.GetMode(bitsCorrected)
-	length, contents, err := decode.GetContentLength(bits, version, mode, errorCorrectionLevel)
-	if err != nil {
-		return "", err
-	}
-	fmt.Printf("Mode is %s / Content length is %d bytes\n", mode.String(), length)
-
-	message, err := decode.Message(mode, length, contents)
-	if err != nil {
-		return "", err
-	}
-
-	return message, nil
+	return *img, found, message
 }
 
 func newImagePointsFromPoints(points *gocv.Mat) []image.Point {
