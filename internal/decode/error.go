@@ -39,6 +39,7 @@ func init() {
 
 // Correct applies the Reed-Solomon error correction algorithm to the given bits.
 // The corrected bits are returned upon success, or an error if the correction failed.
+// Interleaved content is not supported yet, and will return an error.
 //
 // This function uses http://github.com/colin-davis/reedSolomon for error correction.
 // See https://en.m.wikiversity.org/wiki/Reed%E2%80%93Solomon_codes_for_coders for further details
@@ -58,12 +59,7 @@ func Correct(bits []bool, version uint, errorCorrectionLevel ErrorCorrectionLeve
 	}
 	totalLength, contentLength := blocksLayout[0].totalBlockBytes, blocksLayout[0].contentBlockBytes
 
-	contentInt := make([]int, 0, totalLength)
-	for i := 0; i < totalLength*8; i += 8 {
-		n := BitsToUint16(bits[i : i+8])
-		contentInt = append(contentInt, int(n))
-
-	}
+	contentInt := bitsToIntSlice(totalLength, bits)
 
 	numberECCSymbols := totalLength - contentLength
 	errorLocations := []int{}
@@ -74,8 +70,20 @@ func Correct(bits []bool, version uint, errorCorrectionLevel ErrorCorrectionLeve
 	return intSliceToBits(correctedContent), nil
 }
 
+// bitsToIntSlice converts the first "length" bytes of a sequence of bits
+// into a slice of bytes, encoded as ints between 0 and 255.
+// It has the opposite behavior of intSliceToBits.
+func bitsToIntSlice(length int, bits []bool) []int {
+	contentInt := make([]int, 0, length)
+	for i := 0; i < length*8; i += 8 {
+		n := BitsToUint16(bits[i : i+8])
+		contentInt = append(contentInt, int(n))
+	}
+	return contentInt
+}
+
 // intSliceToBits converts a list of integers (each one representing a byte, hence between 0 and 255)
-// to the corresponding sequence of bits.
+// to the corresponding sequence of bits. It has the opposite behavior of bitsToIntSlice.
 // Note that the result length is necessarily the input length times 8 (each integer represents a byte = 8 bits).
 // e.g.
 // [1]      => [false, false, false, false, false, false, false, true]
