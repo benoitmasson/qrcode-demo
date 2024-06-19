@@ -5,8 +5,41 @@ package extract
 // See https://www.thonky.com/qr-code-tutorial/module-placement-matrix#step-6-place-the-data-bits
 // for a visual explanation.
 func ReadBits(dots [][]bool, maskID MaskID) []bool {
-	// TODO (2.3): read bits in order from dots grid
-	return []bool{}
+	mask := masks[maskID]
+	size := len(dots)
+	output := make([]bool, 0, size*size)
+
+	for col := size - 1; col >= 0; col -= 2 {
+		// read from bottom to top
+		for row := size - 1; row >= 0; row-- {
+			if isSignificantDot(row, col, size) {
+				output = append(output, dots[row][col] != mask(row, col))
+			}
+
+			if isSignificantDot(row, col-1, size) {
+				output = append(output, dots[row][col-1] != mask(row, col-1))
+			}
+		}
+
+		col -= 2
+		if col == 6 {
+			// vertical version column exception: ignore totally and move to previous column
+			col--
+		}
+
+		// read from top to bottom
+		for row := 0; row < size; row++ {
+			if isSignificantDot(row, col, size) {
+				output = append(output, dots[row][col] != mask(row, col))
+			}
+
+			if isSignificantDot(row, col-1, size) {
+				output = append(output, dots[row][col-1] != mask(row, col-1))
+			}
+		}
+	}
+
+	return output
 }
 
 // isSignificantDot returns whether dot at position (i, j) represents a valid message bit,
