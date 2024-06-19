@@ -87,9 +87,18 @@ func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height in
 		found       bool
 	)
 
-	// TODO (1.1): detect QR-code position
+	qrcodeDetector := gocv.NewQRCodeDetector()
+	found = qrcodeDetector.Detect(*img, points) // false positives
+	if !found {
+		return *img, false, ""
+	}
 
 	imagePoints = newImagePointsFromPoints(points)
+	found = detect.ValidateSquare(imagePoints, width, height)
+	if !found {
+		return *img, false, ""
+	}
+	// fmt.Println("Points form a square, proceed")
 
 	img.CopyTo(imgWithMiniCode)
 	// miniCode := detect.SetMiniCodeInCorner(imgWithMiniCode, imagePoints, miniCodeWidth, miniCodeHeight)
