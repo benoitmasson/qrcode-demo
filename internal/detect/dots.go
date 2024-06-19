@@ -85,8 +85,35 @@ func getFirstColumnSequences(img gocv.Mat) []int {
 // scanDots scans the input image step by step according to the given scale (dot size in pixel),
 // and constructs the dots grid
 func scanDots(img gocv.Mat, scale float64) QRCode {
-	// TODO (1.4): scan dots grid from the image
-	return nil
+	dots := make(QRCode, 0)
+
+	i, j, row, col := 0, 0, 0, 0
+	for {
+		row = indexToCoordinate(i, scale)
+		if row >= img.Rows() {
+			break
+		}
+		line := make([]bool, 0)
+		for {
+			col = indexToCoordinate(j, scale)
+			if col >= img.Cols() {
+				break
+			}
+			vec := img.GetVecbAt(row, col)
+			pixelLuminosity := int(vec[0]) + int(vec[1]) + int(vec[2])
+			pixelIsBlack := true
+			if pixelLuminosity >= luminosityThreshold {
+				pixelIsBlack = false
+			}
+			line = append(line, pixelIsBlack)
+			j++
+		}
+		dots = append(dots, line)
+		i++
+		j = 0
+	}
+
+	return dots
 }
 
 func indexToCoordinate(i int, scale float64) int {

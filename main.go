@@ -104,13 +104,13 @@ func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height in
 	miniCode := detect.SetMiniCodeInCorner(imgWithMiniCode, imagePoints, miniCodeWidth, miniCodeHeight)
 	detect.EnhanceImage(&miniCode)
 
-	// dots, ok := detect.GetDots(miniCode)
-	// miniCode.Close()
-	// if !ok {
-	// 	return *img, false, ""
-	// }
-	// fmt.Println("Dots scanned successfully, proceed")
-	// printQRCode(dots)
+	dots, ok := detect.GetDots(miniCode)
+	miniCode.Close()
+	if !ok {
+		return *img, false, ""
+	}
+	fmt.Println("Dots scanned successfully, proceed")
+	printQRCode(dots)
 
 	// bits, version, errorCorrectionLevel, err := extractBits(dots)
 	// if err != nil {
