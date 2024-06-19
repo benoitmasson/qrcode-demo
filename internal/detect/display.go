@@ -8,8 +8,22 @@ import (
 )
 
 func SetMiniCodeInCorner(img *gocv.Mat, points []image.Point, width, height int) gocv.Mat {
-	// TODO (1.2): perform a perspective transform + translation to show detected QR-code in top-left corner
-	return gocv.NewMat()
+	originVector := gocv.NewPointVectorFromPoints(points)
+	defer originVector.Close()
+	destinationVector := gocv.NewPointVectorFromPoints([]image.Point{
+		{X: 0, Y: 0},
+		{X: width - 1, Y: 0},
+		{X: width - 1, Y: height - 1},
+		{X: 0, Y: height - 1},
+	})
+	defer destinationVector.Close()
+	transform := gocv.GetPerspectiveTransform(originVector, destinationVector)
+	defer transform.Close()
+	rectangle := (*img).Region(image.Rect(0, 0, width-1, height-1))
+	size := image.Pt(width-1, height-1)
+
+	gocv.WarpPerspective(*img, &rectangle, transform, size)
+	return rectangle
 }
 
 func OutlineQRCode(img *gocv.Mat, points []image.Point, color color.RGBA, width int) {

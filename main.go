@@ -101,7 +101,7 @@ func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height in
 	// fmt.Println("Points form a square, proceed")
 
 	img.CopyTo(imgWithMiniCode)
-	// miniCode := detect.SetMiniCodeInCorner(imgWithMiniCode, imagePoints, miniCodeWidth, miniCodeHeight)
+	_ = detect.SetMiniCodeInCorner(imgWithMiniCode, imagePoints, miniCodeWidth, miniCodeHeight)
 	// detect.EnhanceImage(&miniCode)
 
 	// dots, ok := detect.GetDots(miniCode)
