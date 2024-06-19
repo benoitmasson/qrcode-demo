@@ -150,11 +150,11 @@ func extractBits(dots detect.QRCode) ([]bool, uint, decode.ErrorCorrectionLevel,
 	}
 	fmt.Printf("Version is %d\n", version)
 
-	// maskID, errorCorrectionLevel, err := extract.Format(dots)
-	// if err != nil {
-	// 	return nil, 0, 0, err
-	// }
-	// fmt.Printf("Mask ID is %d / Error correction level is %s\n", maskID, errorCorrectionLevel.String())
+	maskID, errorCorrectionLevel, err := extract.Format(dots)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	fmt.Printf("Mask ID is %d / Error correction level is %s\n", maskID, errorCorrectionLevel.String())
 
 	// bits = extract.ReadBits(dots, maskID)
 	// fmt.Printf("%d bits read, starting with: %v\n", len(bits), bits[:50])
