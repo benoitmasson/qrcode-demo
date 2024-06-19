@@ -12,6 +12,7 @@ import (
 
 	"github.com/benoitmasson/qrcode-demo/internal/decode"
 	"github.com/benoitmasson/qrcode-demo/internal/detect"
+	"github.com/benoitmasson/qrcode-demo/internal/extract"
 )
 
 func main() {
@@ -112,12 +113,12 @@ func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height in
 	fmt.Println("Dots scanned successfully, proceed")
 	printQRCode(dots)
 
-	// bits, version, errorCorrectionLevel, err := extractBits(dots)
-	// if err != nil {
-	// 	fmt.Printf("Dots do not form a valid QR-code: %v\n", err)
-	// 	return *img, false, ""
-	// }
-	// fmt.Println("Bits extracted successfully, proceed")
+	_, _, _, err := extractBits(dots)
+	if err != nil {
+		fmt.Printf("Dots do not form a valid QR-code: %v\n", err)
+		return *img, false, ""
+	}
+	fmt.Println("Bits extracted successfully, proceed")
 
 	// message, err = decodeMessage(bits, version, errorCorrectionLevel)
 	// if err != nil {
@@ -143,12 +144,12 @@ func extractBits(dots detect.QRCode) ([]bool, uint, decode.ErrorCorrectionLevel,
 		return nil, 0, 0, errors.New("dots array too small")
 	}
 
-	// version, err := extract.Version(dots)
-	// if err != nil {
-	// 	return nil, 0, 0, err
-	// }
-	// fmt.Printf("Version is %d\n", version)
-	//
+	version, err := extract.Version(dots)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	fmt.Printf("Version is %d\n", version)
+
 	// maskID, errorCorrectionLevel, err := extract.Format(dots)
 	// if err != nil {
 	// 	return nil, 0, 0, err
