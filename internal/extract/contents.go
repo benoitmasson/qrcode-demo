@@ -6,33 +6,40 @@ package extract
 // for a visual explanation.
 func ReadBits(dots [][]bool, maskID MaskID) []bool {
 	mask := masks[maskID]
-	s := len(dots)
-	bits := make([]bool, 0, s*len(dots)-8*8*3)
+	size := len(dots)
+	output := make([]bool, 0, size*size)
 
-	direction := -1 // start moving up
-	for j := s - 1; j >= 1; j -= 2 {
-		if j == 6 {
-			// vertical version column exception: ignore totally and move to previous column
-			j--
-		}
-		start, end := 0, s
-		if direction < 0 {
-			start, end = s-1, -1
-		}
+	for col := size - 1; col >= 0; col -= 2 {
+		// read from bottom to top
+		for row := size - 1; row >= 0; row-- {
+			if isSignificantDot(row, col, size) {
+				output = append(output, dots[row][col] != mask(row, col))
+			}
 
-		for i := start; i != end; i += direction {
-			for offset := 0; offset <= 1; offset++ {
-				if !isSignificantDot(i, j-offset, s) {
-					continue
-				}
-
-				bits = append(bits, dots[i][j-offset] != mask(i, j-offset)) // != is the same as XOR for booleans
+			if isSignificantDot(row, col-1, size) {
+				output = append(output, dots[row][col-1] != mask(row, col-1))
 			}
 		}
-		direction *= -1 // invert direction
+
+		col -= 2
+		if col == 6 {
+			// vertical version column exception: ignore totally and move to previous column
+			col--
+		}
+
+		// read from top to bottom
+		for row := 0; row < size; row++ {
+			if isSignificantDot(row, col, size) {
+				output = append(output, dots[row][col] != mask(row, col))
+			}
+
+			if isSignificantDot(row, col-1, size) {
+				output = append(output, dots[row][col-1] != mask(row, col-1))
+			}
+		}
 	}
 
-	return bits
+	return output
 }
 
 // isSignificantDot returns whether dot at position (i, j) represents a valid message bit,

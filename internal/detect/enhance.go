@@ -13,5 +13,5 @@ func EnhanceImage(img *gocv.Mat) {
 	defer kernel.Close()
 	gocv.MorphologyEx(*img, img, gocv.MorphOpen, kernel)
 	// increase contrast
-	gocv.AddWeighted(*img, 1.5, *img, 0, 0, img)
+	gocv.AddWeighted(*img, 2, *img, 0, -50, img)
 }

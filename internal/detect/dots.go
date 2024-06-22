@@ -89,13 +89,13 @@ func scanDots(img gocv.Mat, scale float64) QRCode {
 
 	i, j, row, col := 0, 0, 0, 0
 	for {
-		row = int((float64(i)+0.5)*scale + 0.5)
+		row = indexToCoordinate(i, scale)
 		if row >= img.Rows() {
 			break
 		}
 		line := make([]bool, 0)
 		for {
-			col = int((float64(j)+0.5)*scale + 0.5)
+			col = indexToCoordinate(j, scale)
 			if col >= img.Cols() {
 				break
 			}
@@ -114,4 +114,10 @@ func scanDots(img gocv.Mat, scale float64) QRCode {
 	}
 
 	return dots
+}
+
+func indexToCoordinate(i int, scale float64) int {
+	return int(math.Round(
+		(float64(i) + 0.5) * scale,
+	))
 }

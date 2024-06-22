@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"time"
+	"math"
 
 	"gocv.io/x/gocv"
 
@@ -39,7 +39,7 @@ func main() {
 	defer points.Close()
 
 	first := true
-	var width, height int
+	var width, height, fps int
 	fmt.Printf("Start reading device: %v\n", deviceID)
 	for {
 		if ok := webcam.Read(&img); !ok {
@@ -53,7 +53,8 @@ func main() {
 		if first {
 			width = img.Cols()
 			height = img.Rows()
-			fmt.Printf("[%s] %dx%d\n", img.Type(), width, height)
+			fps = int(math.Round(webcam.Get(gocv.VideoCaptureFPS)))
+			fmt.Printf("[%s] %dx%d, %dfps\n", img.Type(), width, height, fps)
 			first = false
 		}
 
@@ -67,7 +68,7 @@ func main() {
 		if found {
 			fmt.Printf("QR-code message is: '\033[1m%s\033[0m'\n", message)
 			fmt.Println()
-			time.Sleep(3 * time.Second)
+			webcam.Grab(3 * fps) // drop frames and sleep for 3 seconds
 		}
 	}
 }
