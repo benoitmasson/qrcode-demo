@@ -10,6 +10,10 @@ If you need an efficient and complete QR-code reader written in Go, you may use 
 
 Or if you really want to rely on OpenCV, then use [QRCodeDetector.DetectAndDecode](https://pkg.go.dev/gocv.io/x/gocv#QRCodeDetector.DetectAndDecode) method from [gocv.io](https://gocv.io/) bindings.
 
+## Presentation
+
+The [presentation slides](./slides/QR%20Codes.pdf) can be found in the [`slides`](./slides/) folder.
+
 ## Instructions
 
 To be able to compile and run this tool, [OpenCV 4](https://opencv.org/) library is required.
