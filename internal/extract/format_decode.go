@@ -1,6 +1,10 @@
 package extract
 
-import "math/bits"
+import (
+	"fmt"
+	"log/slog"
+	"math/bits"
+)
 
 func init() {
 	initFormatRemainders()
@@ -24,7 +28,7 @@ func computeFormatRemainder(n uint16) uint16 {
 	mod := uint(formatGenerator) << 4 // pad generator with trailing 0's to have 15 bits => 0b101001101110000
 	val := uint(n) << 10              // pad format with 10 0's to have 15 bits
 	for i := 0; i < 5; i++ {
-		// fmt.Printf("%015s %015s\n", strconv.FormatInt(int64(val), 2), strconv.FormatInt(int64(mod), 2))
+		slog.Debug(fmt.Sprintf("Value: %015b | Modulo: %015b", val, mod))
 		if bits.Len(uint(val)) >= bits.Len(mod) {
 			val ^= mod
 		}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"log/slog"
 	"math"
 
 	"gocv.io/x/gocv"
@@ -23,7 +24,7 @@ func main() {
 
 	webcam, err := gocv.OpenVideoCapture(deviceID)
 	if err != nil {
-		fmt.Printf("Error opening video capture device %d: %v\n", deviceID, err)
+		slog.Error(fmt.Sprintf("Error opening video capture device %d: %v", deviceID, err))
 		return
 	}
 	defer webcam.Close()
@@ -40,10 +41,10 @@ func main() {
 
 	first := true
 	var width, height, fps int
-	fmt.Printf("Start reading device: %v\n", deviceID)
+	slog.Info(fmt.Sprintf("Start reading device: %v", deviceID))
 	for {
 		if ok := webcam.Read(&img); !ok {
-			fmt.Printf("Device closed: %v\n", deviceID)
+			slog.Error(fmt.Sprintf("Device closed: %v", deviceID))
 			return
 		}
 		if img.Empty() {
@@ -54,7 +55,7 @@ func main() {
 			width = img.Cols()
 			height = img.Rows()
 			fps = int(math.Round(webcam.Get(gocv.VideoCaptureFPS)))
-			fmt.Printf("[%s] %dx%d, %dfps\n", img.Type(), width, height, fps)
+			slog.Info(fmt.Sprintf("[%s] %dx%d, %dfps", img.Type(), width, height, fps))
 			first = false
 		}
 
@@ -66,7 +67,7 @@ func main() {
 		}
 
 		if found {
-			fmt.Printf("QR-code message is: '\033[1m%s\033[0m'\n", message)
+			slog.Warn(fmt.Sprintf("QR-code message is: '\033[1m%s\033[0m'", message))
 			fmt.Println()
 			webcam.Grab(3 * fps) // drop frames and sleep for 3 seconds
 		}
@@ -84,21 +85,21 @@ const (
 func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height int) (gocv.Mat, bool, string) {
 	dots, imagePoints, err := detectDots(img, imgWithMiniCode, points, width, height)
 	if err != nil {
-		fmt.Printf("No valid QR-code found in video frame: %v\n", err)
+		slog.Debug(fmt.Sprintf("No valid QR-code found in video frame: %v", err))
 		return *img, false, ""
 	}
-	fmt.Println("Dots scanned successfully, proceed")
+	slog.Info("Dots scanned successfully, proceed")
 
 	bits, version, errorCorrectionLevel, err := extractBits(dots)
 	if err != nil {
-		fmt.Printf("Dots do not form a valid QR-code: %v\n", err)
+		slog.Warn(fmt.Sprintf("Dots do not form a valid QR-code: %v", err))
 		return *img, false, ""
 	}
-	fmt.Println("Bits extracted successfully, proceed")
+	slog.Info("Bits extracted successfully, proceed")
 
 	message, err := decodeMessage(bits, version, errorCorrectionLevel)
 	if err != nil {
-		fmt.Printf("QR-code cannot be decoded: %v\n", err)
+		slog.Warn(fmt.Sprintf("QR-code cannot be decoded: %v", err))
 		return *img, false, ""
 	}
 
@@ -153,7 +154,7 @@ func extractBits(dots detect.QRCode) ([]bool, uint, decode.ErrorCorrectionLevel,
 	if err != nil {
 		return nil, 0, 0, err
 	}
-	fmt.Printf("Mask ID is %d / Error correction level is %s\n", maskID, errorCorrectionLevel.String())
+	slog.Info(fmt.Sprintf("Mask ID is %d / Error correction level is %s", maskID, errorCorrectionLevel.String()))
 
 	bits := extract.ReadBits(dots, maskID)
 
@@ -173,7 +174,7 @@ func decodeMessage(bits []bool, version uint, errorCorrectionLevel decode.ErrorC
 	if err != nil {
 		return "", err
 	}
-	fmt.Printf("Mode is %s / Content length is %d bytes\n", mode.String(), length)
+	slog.Info(fmt.Sprintf("Mode is %s / Content length is %d bytes", mode.String(), length))
 
 	message, err := decode.Message(mode, length, contents)
 	if err != nil {
