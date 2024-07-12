@@ -1,14 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"image"
+	"log/slog"
 
 	"gocv.io/x/gocv"
 )
 
 func newImagePointsFromPoints(points *gocv.Mat) []image.Point {
 	r, c := points.Rows(), points.Cols()
-	// fmt.Println(points.Channels(), points.Size(), points.Type(), points.Total(), r, c)
+	slog.Debug(fmt.Sprint("Matrix info: ", points.Channels(), points.Size(), points.Type(), points.Total(), r, c))
 
 	imagePoints := make([]image.Point, 0, r*c)
 	for i := 0; i < r; i++ {

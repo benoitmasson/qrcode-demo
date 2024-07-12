@@ -2,6 +2,8 @@ package extract
 
 import (
 	"errors"
+	"fmt"
+	"log/slog"
 
 	"github.com/benoitmasson/qrcode-demo/internal/decode"
 	"github.com/benoitmasson/qrcode-demo/internal/detect"
@@ -19,7 +21,7 @@ const formatMask = 0b101010000010010 // 21522
 func Format(dots detect.QRCode) (MaskID, decode.ErrorCorrectionLevel, error) {
 	format1 := topLeftFormat(dots)
 	format2 := bottomRightFormat(dots)
-	// fmt.Printf("scanned formats:\n- %015s\n- %015s\n", strconv.FormatInt(int64(format1), 2), strconv.FormatInt(int64(format2), 2))
+	slog.Debug(fmt.Sprintf("Scanned formats: %015b | %015b", format1, format2))
 
 	possibleFormats := make(map[uint16]int, 10)
 
@@ -43,7 +45,7 @@ func Format(dots detect.QRCode) (MaskID, decode.ErrorCorrectionLevel, error) {
 	if err != nil {
 		return 0, 0, err
 	}
-	// fmt.Printf("selected format: %05s\n", strconv.FormatInt(int64(format), 2))
+	slog.Debug(fmt.Sprintf("Selected format: %05b", format))
 
 	return maskIDFromFormat(format), errorCorrectionLevelFromFormat(format), nil
 }
