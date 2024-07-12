@@ -82,27 +82,9 @@ const (
 // If successful, returns a new image with miniature QR-code in the top-left corner and the message.
 // Otherwise, returns the original image.
 func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height int) (gocv.Mat, bool, string) {
-	qrcodeDetector := gocv.NewQRCodeDetector()
-	found := qrcodeDetector.Detect(*img, points) // false positives
-	if !found {
-		return *img, false, ""
-	}
-
-	imagePoints := newImagePointsFromPoints(points)
-
-	found = detect.ValidateSquare(imagePoints, width, height)
-	if !found {
-		return *img, false, ""
-	}
-	// fmt.Println("Points form a square, proceed")
-
-	img.CopyTo(imgWithMiniCode)
-	miniCode := detect.SetMiniCodeInCorner(imgWithMiniCode, imagePoints, miniCodeWidth, miniCodeHeight)
-	detect.EnhanceImage(&miniCode)
-
-	dots, ok := detect.GetDots(miniCode)
-	miniCode.Close()
-	if !ok {
+	dots, imagePoints, err := detectDots(img, imgWithMiniCode, points, width, height)
+	if err != nil {
+		fmt.Printf("No valid QR-code found in video frame: %v\n", err)
 		return *img, false, ""
 	}
 	fmt.Println("Dots scanned successfully, proceed")
@@ -120,10 +102,40 @@ func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height in
 		return *img, false, ""
 	}
 
+	// success
 	printQRCode(dots)
 	detect.OutlineQRCode(imgWithMiniCode, imagePoints, color.RGBA{255, 0, 0, 255}, 5)
 
 	return *imgWithMiniCode, true, message
+}
+
+// detectDots detects the QR-code location from the given image (video frame),
+// then extracts the QR-code dots from the image.
+func detectDots(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height int) (detect.QRCode, []image.Point, error) {
+	qrcodeDetector := gocv.NewQRCodeDetector()
+	found := qrcodeDetector.Detect(*img, points) // false positives
+	if !found {
+		return nil, nil, errors.New("no QR-code detected in image")
+	}
+
+	imagePoints := newImagePointsFromPoints(points)
+
+	valid := detect.ValidateSquare(imagePoints, width, height)
+	if !valid {
+		return nil, nil, errors.New("detected QR-code is not a square")
+	}
+
+	img.CopyTo(imgWithMiniCode)
+	miniCode := detect.SetMiniCodeInCorner(imgWithMiniCode, imagePoints, miniCodeWidth, miniCodeHeight)
+	detect.EnhanceImage(&miniCode)
+
+	dots, ok := detect.GetDots(miniCode)
+	miniCode.Close()
+	if !ok {
+		return nil, nil, errors.New("detected pixels do not contain QR-code dots")
+	}
+
+	return dots, imagePoints, nil
 }
 
 // extractBits follows explanations from https://typefully.com/DanHollick/qr-codes-T7tLlNi
