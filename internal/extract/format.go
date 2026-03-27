@@ -1,6 +1,10 @@
 package extract
 
 import (
+	"errors"
+	"fmt"
+	"log/slog"
+
 	"github.com/benoitmasson/qrcode-demo/internal/decode"
 	"github.com/benoitmasson/qrcode-demo/internal/detect"
 )
@@ -15,8 +19,17 @@ const formatMask = 0b101010000010010 // 21522
 // the more likely value among all the encoded values. It fails when the format cannot
 // be clearly recovered from the error correction codes.
 func Format(dots detect.QRCode) (MaskID, decode.ErrorCorrectionLevel, error) {
-	// TODO (2.2): extract mask ID and error correction level from format
-	return maskIDFromFormat(0), errorCorrectionLevelFromFormat(0), nil
+	topLeftFormat := topLeftFormat(dots) ^ formatMask
+	bottomRightFormat := bottomRightFormat(dots) ^ formatMask
+	slog.Debug(fmt.Sprintf("Scanned formats: %015b | %015b", topLeftFormat, bottomRightFormat))
+
+	format1 := uint16(topLeftFormat >> 10)     // first 5 bits
+	format2 := uint16(bottomRightFormat >> 10) // first 5 bits
+	if format1 != format2 {
+		return 0, 0, errors.New("format 1 and format 2 do not match")
+	}
+
+	return maskIDFromFormat(format1), errorCorrectionLevelFromFormat(format1), nil
 }
 
 func topLeftFormat(dots detect.QRCode) uint16 {
