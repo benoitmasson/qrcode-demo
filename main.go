@@ -133,12 +133,11 @@ func detectDots(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height 
 	miniCode := detect.SetMiniCodeInCorner(imgWithMiniCode, imagePoints, miniCodeWidth, miniCodeHeight)
 	detect.EnhanceImage(&miniCode)
 
-	var dots detect.QRCode
-	// dots, ok := detect.GetDots(miniCode)
-	// miniCode.Close()
-	// if !ok {
-	// 	return nil, nil, errors.New("detected pixels do not contain QR-code dots")
-	// }
+	dots, ok := detect.GetDots(miniCode)
+	miniCode.Close()
+	if !ok {
+		return nil, nil, errors.New("detected pixels do not contain QR-code dots")
+	}
 
 	return dots, imagePoints, nil
 }
