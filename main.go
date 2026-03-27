@@ -81,7 +81,9 @@ func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height in
 		found       bool
 	)
 
-	// TODO: decode QR-code
+	qrcodeDetector := gocv.NewQRCodeDetector()
+	message = qrcodeDetector.DetectAndDecode(*img, points, imgWithMiniCode)
+	found = message != ""
 
 	if found {
 		imagePoints = newImagePointsFromPoints(points)
