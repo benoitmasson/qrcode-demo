@@ -91,13 +91,13 @@ func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height in
 	}
 	slog.Info("Dots scanned successfully, proceed")
 
-	// bits, version, errorCorrectionLevel, err := extractBits(dots)
-	// if err != nil {
-	// 	slog.Warn(fmt.Sprintf("Dots do not form a valid QR-code: %v", err))
-	// 	return *img, false, ""
-	// }
-	// slog.Info("Bits extracted successfully, proceed")
-	// _, _, _ = bits, version, errorCorrectionLevel
+	bits, version, errorCorrectionLevel, err := extractBits(dots)
+	if err != nil {
+		slog.Warn(fmt.Sprintf("Dots do not form a valid QR-code: %v", err))
+		return *img, false, ""
+	}
+	slog.Info("Bits extracted successfully, proceed")
+	_, _, _ = bits, version, errorCorrectionLevel
 
 	message := ""
 	// message, err := decodeMessage(bits, version, errorCorrectionLevel)
