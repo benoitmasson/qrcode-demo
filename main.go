@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"image"
@@ -9,6 +10,10 @@ import (
 	"math"
 
 	"gocv.io/x/gocv"
+
+	"github.com/benoitmasson/qrcode-demo/internal/decode"
+	"github.com/benoitmasson/qrcode-demo/internal/detect"
+	"github.com/benoitmasson/qrcode-demo/internal/extract"
 )
 
 func main() {
@@ -71,24 +76,112 @@ func main() {
 	}
 }
 
+const (
+	miniCodeWidth  = 200
+	miniCodeHeight = 200
+)
+
 // scanCode extracts the QR-code from the given image, then decodes it.
 // If successful, returns a new image with miniature QR-code in the top-left corner and the message.
 // Otherwise, returns the original image.
 func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height int) (gocv.Mat, bool, string) {
-	var (
-		imagePoints []image.Point
-		message     string
-		found       bool
-	)
+	dots, imagePoints, err := detectDots(img, imgWithMiniCode, points, width, height)
+	if err != nil {
+		return *img, false, ""
+	}
+	slog.Info("Dots scanned successfully, proceed")
 
-	qrcodeDetector := gocv.NewQRCodeDetector()
-	message = qrcodeDetector.DetectAndDecode(*img, points, imgWithMiniCode)
-	found = message != ""
+	// bits, version, errorCorrectionLevel, err := extractBits(dots)
+	// if err != nil {
+	// 	slog.Warn(fmt.Sprintf("Dots do not form a valid QR-code: %v", err))
+	// 	return *img, false, ""
+	// }
+	// slog.Info("Bits extracted successfully, proceed")
+	// _, _, _ = bits, version, errorCorrectionLevel
 
-	if found {
-		imagePoints = newImagePointsFromPoints(points)
-		outlineQRCode(img, imagePoints, color.RGBA{255, 0, 0, 255}, 5)
+	message := ""
+	// message, err := decodeMessage(bits, version, errorCorrectionLevel)
+	// if err != nil {
+	// 	slog.Warn(fmt.Sprintf("QR-code cannot be decoded: %v", err))
+	// 	return *img, false, ""
+	// }
+
+	// success
+	printQRCode(dots)
+	detect.OutlineQRCode(imgWithMiniCode, imagePoints, color.RGBA{255, 0, 0, 255}, 5)
+
+	return *imgWithMiniCode, true, message
+}
+
+// detectDots detects the QR-code location from the given image (video frame),
+// then extracts the QR-code dots from the image.
+func detectDots(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height int) (detect.QRCode, []image.Point, error) {
+	// TODO (1.1): detect QR-code position
+	return nil, nil, errors.New("TODO")
+
+	imagePoints := newImagePointsFromPoints(points)
+
+	// TODO (1.1): remove false positives
+
+	img.CopyTo(imgWithMiniCode)
+	miniCode := detect.SetMiniCodeInCorner(imgWithMiniCode, imagePoints, miniCodeWidth, miniCodeHeight)
+	detect.EnhanceImage(&miniCode)
+
+	var dots detect.QRCode
+	// dots, ok := detect.GetDots(miniCode)
+	// miniCode.Close()
+	// if !ok {
+	// 	return nil, nil, errors.New("detected pixels do not contain QR-code dots")
+	// }
+
+	return dots, imagePoints, nil
+}
+
+// extractBits follows explanations from https://typefully.com/DanHollick/qr-codes-T7tLlNi
+// to extract the QR-code bits from the 2D dots grid.
+func extractBits(dots detect.QRCode) ([]bool, uint, decode.ErrorCorrectionLevel, error) {
+	if len(dots) < 17 {
+		return nil, 0, 0, errors.New("dots array too small")
 	}
 
-	return *img, found, message
+	version, err := extract.Version(dots)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	slog.Info(fmt.Sprintf("Version is %d", version))
+	maskID, errorCorrectionLevel, err := extract.Format(dots)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	slog.Info(fmt.Sprintf("Mask ID is %d / Error correction level is %s", maskID, errorCorrectionLevel.String()))
+
+	bits := extract.ReadBits(dots, maskID)
+	if len(bits) > 0 {
+		slog.Debug(fmt.Sprintf("%d bits read, starting with: %v\n", len(bits), bits[:50]))
+	}
+
+	return bits, version, errorCorrectionLevel, nil
+}
+
+// decodeMessages performs error correction on the bits read, then decodes the message.
+// In case error correction fails, the uncorrected message is returned (if possible).
+func decodeMessage(bits []bool, version uint, errorCorrectionLevel decode.ErrorCorrectionLevel) (string, error) {
+	bitsCorrected, err := decode.Correct(bits, version, errorCorrectionLevel)
+	if err != nil {
+		return "", err
+	}
+
+	mode := decode.GetMode(bitsCorrected)
+	length, contents, err := decode.GetContentLength(bitsCorrected, version, mode, errorCorrectionLevel)
+	if err != nil {
+		return "", err
+	}
+	slog.Info(fmt.Sprintf("Mode is %s / Content length is %d bytes", mode.String(), length))
+
+	message, err := decode.Message(mode, length, contents)
+	if err != nil {
+		return "", err
+	}
+
+	return message, nil
 }

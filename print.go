@@ -5,9 +5,11 @@ import (
 	"strings"
 
 	"gocv.io/x/gocv"
+
+	"github.com/benoitmasson/qrcode-demo/internal/detect"
 )
 
-func printQRCode(qrcode QRCode) {
+func printQRCode(qrcode detect.QRCode) {
 	if len(qrcode) == 0 {
 		return
 	}
