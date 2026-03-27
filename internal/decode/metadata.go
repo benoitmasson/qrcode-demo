@@ -1,6 +1,7 @@
 package decode
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -30,8 +31,8 @@ func (m Mode) String() string {
 // GetMode extracts the contents type from the header.
 // The first 4 bits are used.
 func GetMode(bits []bool) Mode {
-	// TODO (3.2): read mode from bits sequence
-	return Mode(0)
+	mode := BitsToUint16(bits[:4])
+	return Mode(mode)
 }
 
 // GetContentLength extracts the contents length from the header.
@@ -40,8 +41,20 @@ func GetMode(bits []bool) Mode {
 // Also, the contents bits are returned after trimming the header.
 // See https://www.thonky.com/qr-code-tutorial/data-encoding#step-4-add-the-character-count-indicator
 func GetContentLength(bits []bool, version uint, mode Mode, errorCorrectionLevel ErrorCorrectionLevel) (uint, []bool, error) {
-	// TODO (3.2): read message length from bits sequence
-	return 0, bits, nil
+	nb := lengthBytes(version, mode)
+	if nb == 0 {
+		return 0, nil, fmt.Errorf("invalid version-mode (%d, %b) pair", version, mode)
+	}
+	if len(bits) < 4+nb {
+		return 0, nil, errors.New("not enough bits in contents for metadata")
+	}
+
+	length := uint(BitsToUint16(bits[4 : 4+nb]))
+	if length <= 0 {
+		return 0, nil, fmt.Errorf("invalid length %d", length)
+	}
+
+	return length, bits[4+nb:], nil
 }
 
 func lengthBytes(version uint, mode Mode) int {
