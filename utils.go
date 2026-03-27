@@ -1,16 +1,16 @@
 package main
 
 import (
-	"fmt"
 	"image"
-	"log/slog"
+	"image/color"
 
 	"gocv.io/x/gocv"
 )
 
+type QRCode [][]bool
+
 func newImagePointsFromPoints(points *gocv.Mat) []image.Point {
 	r, c := points.Rows(), points.Cols()
-	slog.Debug(fmt.Sprint("Matrix info: ", points.Channels(), points.Size(), points.Type(), points.Total(), r, c))
 
 	imagePoints := make([]image.Point, 0, r*c)
 	for i := 0; i < r; i++ {
@@ -25,4 +25,14 @@ func newImagePointsFromPoints(points *gocv.Mat) []image.Point {
 		}
 	}
 	return imagePoints
+}
+
+func outlineQRCode(img *gocv.Mat, points []image.Point, color color.RGBA, width int) {
+	for i := 1; i < len(points); i++ {
+		gocv.Line(img, points[i-1], points[i], color, width)
+	}
+	if len(points) > 0 {
+		// close outline
+		gocv.Line(img, points[len(points)-1], points[0], color, width)
+	}
 }
