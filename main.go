@@ -116,12 +116,18 @@ func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height in
 // detectDots detects the QR-code location from the given image (video frame),
 // then extracts the QR-code dots from the image.
 func detectDots(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height int) (detect.QRCode, []image.Point, error) {
-	// TODO (1.1): detect QR-code position
-	return nil, nil, errors.New("TODO")
+	qrcodeDetector := gocv.NewQRCodeDetector()
+	found := qrcodeDetector.Detect(*img, points) // false positives
+	if !found {
+		return nil, nil, errors.New("no QR-code detected in image")
+	}
 
 	imagePoints := newImagePointsFromPoints(points)
 
-	// TODO (1.1): remove false positives
+	valid := detect.ValidateSquare(imagePoints, width, height)
+	if !valid {
+		return nil, nil, errors.New("detected QR-code is not a square")
+	}
 
 	img.CopyTo(imgWithMiniCode)
 	miniCode := detect.SetMiniCodeInCorner(imgWithMiniCode, imagePoints, miniCodeWidth, miniCodeHeight)
