@@ -97,14 +97,12 @@ func scanCode(img, imgWithMiniCode *gocv.Mat, points *gocv.Mat, width, height in
 		return *img, false, ""
 	}
 	slog.Info("Bits extracted successfully, proceed")
-	_, _, _ = bits, version, errorCorrectionLevel
 
-	message := ""
-	// message, err := decodeMessage(bits, version, errorCorrectionLevel)
-	// if err != nil {
-	// 	slog.Warn(fmt.Sprintf("QR-code cannot be decoded: %v", err))
-	// 	return *img, false, ""
-	// }
+	message, err := decodeMessage(bits, version, errorCorrectionLevel)
+	if err != nil {
+		slog.Warn(fmt.Sprintf("QR-code cannot be decoded: %v", err))
+		return *img, false, ""
+	}
 
 	// success
 	printQRCode(dots)
